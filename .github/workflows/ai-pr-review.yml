@@ -16,6 +16,8 @@ jobs:
       base_branch: ${{ github.event.pull_request.base.ref }}
       head_branch: ${{ github.event.pull_request.head.ref }}
       commit_sha: ${{ github.event.pull_request.head.sha }}
+      agent_repository: PR-REVIEW-ORGANIZATION/AI-AGENT-REPO
+      agent_ref: main
     secrets:
       GH_TOKEN: ${{ github.token }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

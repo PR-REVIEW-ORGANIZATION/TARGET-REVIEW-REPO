@@ -19,7 +19,7 @@ jobs:
       agent_repository: PR-REVIEW-ORGANIZATION/AI-AGENT-REPO
       agent_ref: main
     secrets:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      GH_TOKEN: ${{ secrets.github_token }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       LLM_API_URL: ${{ secrets.LLM_API_URL }}
       LLM_MODEL: ${{ secrets.LLM_MODEL }}

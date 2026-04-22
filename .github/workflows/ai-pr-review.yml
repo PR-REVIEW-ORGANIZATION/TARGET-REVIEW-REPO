@@ -2,136 +2,22 @@ name: AI PR Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
-
-concurrency:
-  group: ai-pr-review-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+    types: [opened, synchronize, reopened]
 
 jobs:
-  ai-pr-review:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Review PR with OpenAI
-        uses: actions/github-script@v7
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}
-        with:
-          script: |
-            const marker = "<!-- ai-pr-review -->";
-            const pr = context.payload.pull_request;
-
-            if (!pr) {
-              core.info("No pull_request payload found.");
-              return;
-            }
-
-            if (pr.draft) {
-              core.info("Skipping draft PR.");
-              return;
-            }
-
-            if (!process.env.OPENAI_API_KEY) {
-              core.setFailed("Missing OPENAI_API_KEY secret.");
-              return;
-            }
-
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const pull_number = pr.number;
-
-            const { data: diff } = await github.request(
-              "GET /repos/{owner}/{repo}/pulls/{pull_number}",
-              {
-                owner,
-                repo,
-                pull_number,
-                headers: { accept: "application/vnd.github.v3.diff" }
-              }
-            );
-
-            const maxDiffChars = 120000;
-            const trimmedDiff =
-              diff.length > maxDiffChars
-                ? diff.slice(0, maxDiffChars) + "\n\n[Diff truncated due to size.]"
-                : diff;
-
-            const prompt = [
-              "Review this pull request diff.",
-              "Focus on correctness, regressions, security, and missing tests.",
-              "Be concise and practical.",
-              "",
-              `PR title: ${pr.title}`,
-              `Base: ${pr.base.ref}, Head: ${pr.head.ref}`,
-              "",
-              "Diff:",
-              trimmedDiff
-            ].join("\n");
-
-            const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                model: process.env.OPENAI_MODEL,
-                temperature: 0.2,
-                messages: [
-                  {
-                    role: "system",
-                    content:
-                      "You are a senior code reviewer. Return markdown with sections: High Risk, Medium Risk, Low Risk, and Test Gaps. If no issues, explicitly say so."
-                  },
-                  { role: "user", content: prompt }
-                ]
-              })
-            });
-
-            if (!aiResponse.ok) {
-              const errorText = await aiResponse.text();
-              core.setFailed(`OpenAI request failed (${aiResponse.status}): ${errorText}`);
-              return;
-            }
-
-            const aiJson = await aiResponse.json();
-            const reviewBody =
-              aiJson?.choices?.[0]?.message?.content?.trim() ||
-              "No review content returned by model.";
-
-            const finalComment = [marker, "## AI PR Review", "", reviewBody].join("\n");
-
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner,
-              repo,
-              issue_number: pull_number,
-              per_page: 100
-            });
-
-            const existing = comments.find(
-              (c) => c.user?.type === "Bot" && c.body?.includes(marker)
-            );
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: existing.id,
-                body: finalComment
-              });
-              core.info("Updated existing AI PR review comment.");
-            } else {
-              await github.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number: pull_number,
-                body: finalComment
-              });
-              core.info("Created AI PR review comment.");
-            }
+  review:
+    uses: PR-REVIEW-ORGANIZATION/AI-AGENT-REPO/pr-review-agent/.github/workflows/review.yml@main
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      repository: ${{ github.repository }}
+      pr_number: ${{ github.event.pull_request.number }}
+      base_branch: ${{ github.event.pull_request.base.ref }}
+      head_branch: ${{ github.event.pull_request.head.ref }}
+      commit_sha: ${{ github.event.pull_request.head.sha }}
+    secrets:
+      github_token: ${{ secrets.GITHUB_TOKEN }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      LLM_API_URL: ${{ secrets.LLM_API_URL }}
+      LLM_MODEL: ${{ secrets.LLM_MODEL }}

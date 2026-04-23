@@ -21,7 +21,7 @@ jobs:
       head_branch: ${{ github.event.pull_request.head.ref }}
       commit_sha: ${{ github.event.pull_request.head.sha }}
     secrets:
-      github_token: ${{ secrets.GITHUB_TOKEN }}
+      repo_token: ${{ secrets.GITHUB_TOKEN }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       LLM_API_URL: ${{ secrets.LLM_API_URL }}
       LLM_MODEL: ${{ secrets.LLM_MODEL }}

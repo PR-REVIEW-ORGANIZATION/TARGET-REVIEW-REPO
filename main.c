@@ -1,14 +1,15 @@
 #include <stdio.h>
 
 int main(void) {
-    int value1, value2;
+    double value1, value2, average;
 
     printf("Enter first value: ");
-    scanf("%d", &value1);
+    scanf("%lf", &value1);
 
     printf("Enter second value: ");
-    scanf("%d", &value2);
+    scanf("%lf", &value2);
 
-    printf("You entered: %d and %d\n", value1, value2);
+    average = (value1 + value2) / 2.0;
+    printf("Average: %.2f\n", average);
     return 0;
 }

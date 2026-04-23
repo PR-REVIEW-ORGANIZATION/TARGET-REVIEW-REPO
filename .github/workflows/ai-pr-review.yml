@@ -20,8 +20,8 @@ jobs:
       base_branch: ${{ github.event.pull_request.base.ref }}
       head_branch: ${{ github.event.pull_request.head.ref }}
       commit_sha: ${{ github.event.pull_request.head.sha }}
+      llm_api_url: https://genai-sharedservice-americas.pwc.com
+      llm_model: azure.gpt-4o-mini
     secrets:
       repo_token: ${{ secrets.GITHUB_TOKEN }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      LLM_API_URL: ${{ secrets.LLM_API_URL }}
-      LLM_MODEL: ${{ secrets.LLM_MODEL }}

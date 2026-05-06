@@ -1,5 +1,5 @@
 #include <stdio.h>
-
+//avg
 int main(void) {
     double value1, value2, average;
 
